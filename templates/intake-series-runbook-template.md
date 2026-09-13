@@ -26,8 +26,7 @@ Review, Specify, Autonomous, or Parallel Autonomous.
 
 When schema 2.0 is configured, resolve the Series manifest and target paths
 through `requirements/intake-governance-config.json`. Treat
-`RequirementsGovernanceGate` as a binding predecessor edge. Require exactly one
-evidenced `Eligible` target, but never interpret eligibility as implementation,
+`RequirementsGovernanceGate` as a binding predecessor edge. Require one evidenced `Eligible` target for an active delivery series and none for a `Completed` series, but never interpret eligibility as implementation,
 remote-delivery, bypass, or follow-on authority.
 
 If the repository has no active intake of its own, use `status: "Idle"` with

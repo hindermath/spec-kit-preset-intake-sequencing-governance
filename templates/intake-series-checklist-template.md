@@ -8,7 +8,7 @@
 - [ ] Every edge uses an accepted type and correct binding flag.
 - [ ] `RequirementsGovernanceGate` is used only for a binding predecessor that
       must complete before the dependent intake becomes eligible.
-- [ ] A non-idle series has exactly one current `Eligible` target; eligibility
+- [ ] An active delivery series has exactly one current `Eligible` target; a `Completed` series has none; eligibility
       grants no delivery authority.
 - [ ] An `Idle` series has zero targets, roots, dependencies, and eligible
       candidates.
