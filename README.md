@@ -1,6 +1,6 @@
 # Intake Sequencing Governance
 
-Aktuelle Version / Current version: **0.2.5**. Dieser Patch schliesst physische
+Aktuelle Version / Current version: **0.2.6**. Dieser Patch schliesst physische
 Collection-Aliase und unbekannte Lifecycle-Zustaende aus. Authoring prueft auch
 bestehende Receipt-Ziele und Quellen vor dem Lesen gegen die Repository-Grenze.
 
@@ -50,7 +50,7 @@ Ein gewöhnlicher zweiter Index im selben Repository bleibt ein Fehler.*
 
 ```bash
 specify preset add \
-  --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.5.zip \
+  --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.6.zip \
   --priority 66
 ```
 
