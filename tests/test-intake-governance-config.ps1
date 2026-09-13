@@ -159,6 +159,8 @@ try {
     $IdleManifest | ConvertTo-Json -Depth 12 |
         Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
     Invoke-Fixture (Write-JsonFixture 'idle-series.json' $ManifestInventory) 0 '"eligibleCandidate": "N/A"'
+    Invoke-Fixture (Write-JsonFixture 'idle-with-standalone.json' $ManifestInventory) 0 '"activeIntakeCount": 1'
+    Invoke-Fixture (Write-JsonFixture 'idle-strict-with-standalone.json' $Base) 2 'RIG013'
 
     $InvalidIdleManifest = $IdleManifest.Clone()
     $InvalidIdleManifest.orderedTargets = @($Manifest.orderedTargets[0])
@@ -347,6 +349,12 @@ try {
         [IO.File]::WriteAllText((Join-Path $Root 'requirements/intakes/series/manifest.json'), $Json)
         Invoke-Fixture (Write-JsonFixture 'english.json' $English) 0 '"activeIntakeCount": 0'
         $Root = $OriginalRoot
+    }
+    foreach ($ForeignPath in @('..\outside', 'C:\outside', 'C:outside')) {
+        $Foreign = $Base.Clone()
+        $Foreign.collections = $Base.collections.Clone()
+        $Foreign.collections.backlog = $ForeignPath
+        Invoke-Fixture (Write-JsonFixture ('foreign-' + [guid]::NewGuid() + '.json') $Foreign) 2 'RIG004'
     }
     # DE: Unbekannte Zustaende und physisch identische Collection-Wurzeln sind ungueltig.
     # EN: Unknown states and physically aliased collection roots are invalid.
