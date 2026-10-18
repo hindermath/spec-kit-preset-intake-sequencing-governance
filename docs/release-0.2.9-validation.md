@@ -14,7 +14,7 @@ Zweck, Voraussetzungen, explizite Aktionen, Vorlagen, Evidence und Komposition
 werden nachvollziehbarer beschrieben. Installation startet keine Produktlaeufe
 und erteilt keine neue Ausfuehrungs-, Merge- oder Freigabeberechtigung.
 
-Commands, Templates, Routing, Prioritaeten und fachliche Regeln bleiben unveraendert. / Commands, templates, routing, priorities and professional rules remain unchanged.
+Die Generator-Metadaten der Receipt-Vorlage binden 0.2.9; Schema, Commands, Routing, Prioritaeten und fachliche Regeln bleiben unveraendert. / Receipt-template generator metadata binds 0.2.9; schema, commands, routing, priorities and professional rules remain unchanged.
 
 Pruefung: bestehende relevante Regressionen, Manifest-/Versionskonsistenz,
 Markdown, Links/Anker, resolve-Namen und Shell-Beispiele. Nach Publikation
