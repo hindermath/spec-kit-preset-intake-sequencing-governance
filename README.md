@@ -36,6 +36,52 @@ before Autonomous Run at `70`.
 
 ## Why This Preset Exists
 
+### Einstieg und Übergabe / Getting Started and Handoff
+
+Voraussetzung: initialisiertes Zielprojekt, Spec Kit `>=0.8.3`, vorhandene
+Intakes und geklärte Abhängigkeiten. Ein Serienmanifest beschreibt Ziele,
+Reihenfolge und Kanten; ein DAG ist ein gerichteter Graph ohne Zyklen.
+Das [Manifest](preset.yml) liefert eigene Serien-Commands und Starter,
+keine nach Installation automatisch gestartete Reihenfolgeplanung.
+
+*Prerequisites: initialized target project, Spec Kit >=0.8.3, existing intakes
+and understood dependencies. A series manifest records targets, order and
+edges; a DAG is a directed graph without cycles. The [manifest](preset.yml)
+supplies standalone series commands/starters, not automatic scheduling.*
+
+Beispiel: A ist Voraussetzung für B. Genau diese Serie mit begründeter Kante
+vorschlagen lassen und Create ausdrücklich genehmigen. Danach
+`$speckit-intake-series-status` und `$speckit-intake-series-next` prüfen.
+Nach belegtem Abschluss von A kann B startfähig sein; `next` berichtet nur.
+Review/Feature-Start separat beauftragen. Fehlende Abschlussbelege nicht erfinden.
+
+*Example: A is required by B. Request that exact series proposal with a
+justified edge and explicitly approve Create. Check series-status and
+series-next. After proven completion of A, B may be eligible; next only reports.
+Review/feature execution needs separate authority. Never invent completion.*
+
+Kleinere Prioritätszahlen haben höhere Auflösungspriorität; Presets und lokale
+Overrides können gleichnamige Starter ersetzen. Dies ersetzt keine bindenden
+Kanten, Review-Frische oder Freigaben. Eigene Kombinationen separat prüfen.
+Bei `RIG017` Status und Ablage unter Update-Autorität klären, nicht Dateien
+nur zum Bestehen umbenennen.
+
+*Lower numbers mean higher precedence; presets/overrides can replace same-name
+starters. This replaces neither binding edges, review freshness nor authority.
+Check custom combinations. Resolve RIG017 lifecycle/storage mismatches under
+Update authority, not by renaming files just to pass.*
+
+Leserpfad / Reader path: [Installation](#installation) → [Commands](#commands) →
+[Example](#example) → [Composition](#composition) →
+[Completed Series](#abgeschlossene-serien--completed-series).
+
+Read-only Installationsprüfung / Read-only installation checks:
+
+```bash
+specify preset info intake-sequencing-governance
+specify preset resolve intake-series-manifest-template
+```
+
 An order table alone cannot distinguish a binding predecessor from a preferred
 delivery order. This preset stores both a learner-readable order and a
 machine-checkable typed graph. It never writes intake content and never starts
