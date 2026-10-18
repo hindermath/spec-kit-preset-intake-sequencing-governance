@@ -1,6 +1,13 @@
 # Intake Sequencing Governance
 
-Aktuelle Version / Current version: **0.2.8**. Der Installationsbefehl steht
+Patch **0.2.9** liefert die verbesserte zweisprachige Einstiegs- und
+Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
+[Release-Nachweis / Release record](docs/release-0.2.9-validation.md).
+
+*Patch 0.2.9 packages the improved bilingual getting-started and composition
+guide. Behavior and authority boundaries remain unchanged.*
+
+Aktuelle Version / Current version: **0.2.9**. Der Installationsbefehl steht
 auf einer Zeile und ist direkt vom Community-Validator auswertbar. Die
 Sequencing-Logik ist gegenueber 0.2.7 unveraendert; bestehende Tags und
 Archive bleiben erhalten. Siehe [Patch-Nachweis](docs/release-0.2.8-validation.md).
@@ -18,7 +25,14 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Coordinated versions: Authoring 0.3.6, Review 0.2.4, Sequencing 0.2.7.
+Coordinated patch versions: Authoring 0.3.8, Review 0.2.5, Sequencing 0.2.9.
+
+Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
+macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
+abweisen. Die Release-Pruefung verwendet lokal Python 3.14 und in Intake-CI 3.12.
+*Use a maintained Python runtime for Python-backed validation. macOS system
+Python 3.9 can reject valid UTC timestamps with seven fractional digits.
+Release validation uses Python 3.14 locally and 3.12 in Intake CI.*
 Each preset remains independently installable; historical evidence is preserved.
 
 Version **0.2.6** schliesst physische
@@ -116,7 +130,7 @@ Ein gewöhnlicher zweiter Index im selben Repository bleibt ein Fehler.*
 ## Installation
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.8.zip --priority 66
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.9.zip --priority 66
 ```
 
 ## Commands
