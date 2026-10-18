@@ -1,6 +1,13 @@
 # Intake Sequencing Governance
 
-Aktuelle Version / Current version: **0.2.8**. Der Installationsbefehl steht
+Patch **0.2.9** liefert die verbesserte zweisprachige Einstiegs- und
+Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
+[Release-Nachweis / Release record](docs/release-0.2.9-validation.md).
+
+*Patch 0.2.9 packages the improved bilingual getting-started and composition
+guide. Behavior and authority boundaries remain unchanged.*
+
+Aktuelle Version / Current version: **0.2.9**. Der Installationsbefehl steht
 auf einer Zeile und ist direkt vom Community-Validator auswertbar. Die
 Sequencing-Logik ist gegenueber 0.2.7 unveraendert; bestehende Tags und
 Archive bleiben erhalten. Siehe [Patch-Nachweis](docs/release-0.2.8-validation.md).
@@ -116,7 +123,7 @@ Ein gewöhnlicher zweiter Index im selben Repository bleibt ein Fehler.*
 ## Installation
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.8.zip --priority 66
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-sequencing-governance/archive/refs/tags/v0.2.9.zip --priority 66
 ```
 
 ## Commands
