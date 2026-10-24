@@ -44,7 +44,7 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Documentation target combination (not a new field-test claim): Authoring 0.3.9, Review 0.2.6, Sequencing 0.2.10.
+Documentation target combination (not a new field-test claim): Authoring 0.3.10, Review 0.2.7, Sequencing 0.2.11.
 
 Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
 macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
