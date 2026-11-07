@@ -147,6 +147,12 @@ try {
         $M.roots = @()
         $M.dependencies = @()
     } 'ISG003'
+    Invoke-NegativeCase { param($M) $M.status = 'Completed' } 'ISG009'
+    Reset-Fixture
+    $script:Manifest.status = 'Completed'
+    foreach ($Target in $script:Manifest.orderedTargets) { $Target.status = 'Completed' }
+    Save-Json $script:Manifest (Join-Path $TempRoot 'manifest.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell manifest 0 }
 
     Invoke-NegativeCase { param($M) $M.orderedTargets[1].path = '../escape.md' } 'ISG003'
     Invoke-NegativeCase { param($M) $M.orderedTargets[1].path = 'intakes/a.md' } 'ISG003'

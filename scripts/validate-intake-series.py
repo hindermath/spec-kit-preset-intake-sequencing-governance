@@ -144,6 +144,9 @@ def validate_manifest(path: Path, repo: Path) -> tuple[dict, dict]:
         paths.append(target_path)
         target_states[target_path] = target_status
 
+    if status == "Completed" and any(state != "Completed" for state in target_states.values()):
+        fail("ISG009", "Completed series requires every target to be Completed")
+
     if not isinstance(roots, list) or len(roots) != len(set(roots)):
         fail("ISG008", "roots must be a unique string array")
     if any(not isinstance(root, str) or root not in paths for root in roots):
