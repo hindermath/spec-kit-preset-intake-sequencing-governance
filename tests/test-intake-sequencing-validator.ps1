@@ -6,7 +6,9 @@ $ErrorActionPreference = 'Stop'
 
 $PresetRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $TempRoot = Join-Path ([IO.Path]::GetTempPath()) "intake-sequencing-$([Guid]::NewGuid())"
+$OutsideRoot = "${TempRoot}-outside"
 New-Item -ItemType Directory -Path (Join-Path $TempRoot 'intakes') -Force | Out-Null
+New-Item -ItemType Directory -Path $OutsideRoot -Force | Out-Null
 
 function Get-NormalizedHash([string]$Path) {
     $Utf8 = [Text.UTF8Encoding]::new($false, $true)
@@ -157,6 +159,21 @@ try {
     Invoke-NegativeCase { param($M) $M.orderedTargets[1].path = '../escape.md' } 'ISG003'
     Invoke-NegativeCase { param($M) $M.orderedTargets[1].path = 'intakes/a.md' } 'ISG003'
     Invoke-NegativeCase { param($M) $M.orderedTargets[1].normalizedSha256 = '0' * 64 } 'ISG004'
+    Reset-Fixture
+    $outsideTarget = Join-Path $OutsideRoot 'a.md'
+    Copy-Item (Join-Path $TempRoot 'intakes/a.md') $outsideTarget
+    Remove-Item (Join-Path $TempRoot 'intakes/a.md')
+    New-Item -ItemType SymbolicLink -Path (Join-Path $TempRoot 'intakes/a.md') -Target $outsideTarget | Out-Null
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell manifest 2 'ISG004' }
+    Remove-Item (Join-Path $TempRoot 'intakes/a.md') -Force
+    Reset-Fixture
+    $outsideManifest = Join-Path $OutsideRoot 'manifest.json'
+    Copy-Item (Join-Path $TempRoot 'manifest.json') $outsideManifest
+    Remove-Item (Join-Path $TempRoot 'manifest.json')
+    New-Item -ItemType SymbolicLink -Path (Join-Path $TempRoot 'manifest.json') -Target $outsideManifest | Out-Null
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR004' }
+    Remove-Item (Join-Path $TempRoot 'manifest.json') -Force
+    Reset-Fixture
     Invoke-NegativeCase { param($M) $M.dependencies[0].to = 'intakes/missing.md' } 'ISG005'
     Invoke-NegativeCase { param($M) $M.dependencies[0].to = 'intakes/a.md' } 'ISG005'
     Invoke-NegativeCase { param($M) $M.dependencies[0].kind = 'Unknown' } 'ISG006'
@@ -221,7 +238,24 @@ try {
         Invoke-Validator $Shell receipt 2 'ISR007'
     }
 
+    $outsidePrior = Join-Path $OutsideRoot 'prior-receipt.json'
+    Copy-Item (Join-Path $TempRoot 'prior-receipt.json') $outsidePrior
+    Remove-Item (Join-Path $TempRoot 'prior-receipt.json')
+    New-Item -ItemType SymbolicLink -Path (Join-Path $TempRoot 'prior-receipt.json') -Target $outsidePrior | Out-Null
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR006' }
+    Remove-Item (Join-Path $TempRoot 'prior-receipt.json') -Force
+    Copy-Item $outsidePrior (Join-Path $TempRoot 'prior-receipt.json')
+
+    $outsideTombstone = Join-Path $OutsideRoot 'tombstone.json'
+    [IO.File]::WriteAllText($outsideTombstone, "{}`n", [Text.UTF8Encoding]::new($false))
+    $script:Receipt.tombstone.path = 'tombstone.json'
+    $script:Receipt.tombstone.normalizedSha256 = Get-NormalizedHash $outsideTombstone
+    New-Item -ItemType SymbolicLink -Path (Join-Path $TempRoot 'tombstone.json') -Target $outsideTombstone | Out-Null
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR007' }
+
     Write-Output 'PASS: intake sequencing validator parity and negative cases'
 } finally {
     Remove-Item -LiteralPath $TempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $OutsideRoot -Recurse -Force -ErrorAction SilentlyContinue
 }

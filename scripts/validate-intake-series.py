@@ -81,6 +81,18 @@ def relative_path(value: str) -> bool:
     return not candidate.is_absolute() and ".." not in candidate.parts and value != "."
 
 
+def repository_file(path: Path, repo: Path, code: str) -> Path:
+    # Resolve symlinks before reading bytes; lexical relative paths alone do not
+    # keep target and receipt evidence inside the repository.
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError):
+        fail(code, f"evidence missing: {path}")
+    if not resolved.is_relative_to(repo) or not resolved.is_file():
+        fail(code, f"evidence resolves outside repository or is not a file: {path}")
+    return resolved
+
+
 def valid_uuid(value: str) -> bool:
     try:
         return uuid.UUID(value).int != 0
@@ -135,7 +147,7 @@ def validate_manifest(path: Path, repo: Path) -> tuple[dict, dict]:
         expected_hash = text(target, "normalizedSha256", "ISG004")
         if not re.fullmatch(r"[0-9a-f]{64}", expected_hash):
             fail("ISG004", f"invalid target hash: {target_path}")
-        full_path = repo / target_path
+        full_path = repository_file(repo / target_path, repo, "ISG004")
         if not full_path.is_file() or digest(full_path) != expected_hash:
             fail("ISG004", f"target missing or hash drift: {target_path}")
         target_status = text(target, "status", "ISG009")
@@ -268,7 +280,7 @@ def validate_receipt(path: Path, repo: Path) -> dict:
     expected_hash = text(manifest, "normalizedSha256", "ISR004")
     if not relative_path(manifest_path) or not re.fullmatch(r"[0-9a-f]{64}", expected_hash):
         fail("ISR004", "manifest evidence is invalid")
-    full_manifest = repo / manifest_path
+    full_manifest = repository_file(repo / manifest_path, repo, "ISR004")
     if not full_manifest.is_file() or digest(full_manifest) != expected_hash:
         fail("ISR004", "manifest missing or hash drift")
     manifest_data, summary = validate_manifest(full_manifest, repo)
@@ -288,7 +300,7 @@ def validate_receipt(path: Path, repo: Path) -> dict:
             if field.endswith("Sha256") and not re.fullmatch(r"[0-9a-f]{64}", value):
                 fail("ISR006", f"{field} must be a SHA-256 value")
         for field in ("receiptPath", "manifestArchivePath"):
-            evidence_path = repo / supersedes[field]
+            evidence_path = repository_file(repo / supersedes[field], repo, "ISR006")
             hash_field = "receiptNormalizedSha256" if field == "receiptPath" else "manifestArchiveSha256"
             if not evidence_path.is_file() or digest(evidence_path) != supersedes[hash_field]:
                 fail("ISR006", f"archive evidence missing or drifted: {field}")
@@ -300,7 +312,7 @@ def validate_receipt(path: Path, repo: Path) -> dict:
         tombstone_hash = text(tombstone, "normalizedSha256", "ISR007")
         if not relative_path(tombstone_path) or not re.fullmatch(r"[0-9a-f]{64}", tombstone_hash):
             fail("ISR007", "tombstone evidence is invalid")
-        full_tombstone = repo / tombstone_path
+        full_tombstone = repository_file(repo / tombstone_path, repo, "ISR007")
         if not full_tombstone.is_file() or digest(full_tombstone) != tombstone_hash:
             fail("ISR007", "tombstone missing or hash drift")
     return {"receiptId": receipt_id, **summary}
