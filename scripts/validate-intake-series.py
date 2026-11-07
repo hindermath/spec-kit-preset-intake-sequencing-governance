@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import re
@@ -299,13 +300,35 @@ def validate_receipt(path: Path, repo: Path) -> dict:
                 fail("ISR006", f"{field} must be repository-relative")
             if field.endswith("Sha256") and not re.fullmatch(r"[0-9a-f]{64}", value):
                 fail("ISR006", f"{field} must be a SHA-256 value")
+        archive_paths = {}
         for field in ("receiptPath", "manifestArchivePath"):
             evidence_path = repository_file(repo / supersedes[field], repo, "ISR006")
             hash_field = "receiptNormalizedSha256" if field == "receiptPath" else "manifestArchiveSha256"
             if not evidence_path.is_file() or digest(evidence_path) != supersedes[hash_field]:
                 fail("ISR006", f"archive evidence missing or drifted: {field}")
+            archive_paths[field] = evidence_path
+        prior_receipt = load_json(archive_paths["receiptPath"])
+        prior_manifest = load_json(archive_paths["manifestArchivePath"])
+        prior_evidence = prior_receipt.get("manifest")
+        if (prior_receipt.get("schemaVersion") != "1.0"
+                or prior_receipt.get("documentType") != "IntakeSeriesReceipt"
+                or prior_receipt.get("seriesId") != series_id
+                or prior_receipt.get("receiptId") == receipt_id
+                or not isinstance(prior_receipt.get("receiptId"), str)
+                or not valid_uuid(prior_receipt.get("receiptId", ""))
+                or prior_receipt.get("status") not in {"Ready", "NeedsClarification"}
+                or not isinstance(prior_receipt.get("operation"), dict)
+                or prior_receipt["operation"].get("type") not in {"Create", "Update", "LegacyAdoption"}
+                or not isinstance(prior_evidence, dict)
+                or prior_evidence.get("normalizedSha256") != supersedes["manifestArchiveSha256"]
+                or prior_manifest.get("schemaVersion") != "1.0"
+                or prior_manifest.get("documentType") != "IntakeSeriesManifest"
+                or prior_manifest.get("seriesId") != series_id):
+            fail("ISR006", "supersedes does not identify the archived predecessor of this series")
     tombstone = data.get("tombstone")
     if operation_type == "Delete":
+        if status != "Deleted" or manifest_data.get("status") != "Deleted":
+            fail("ISR007", "Delete receipt and current manifest must both be Deleted")
         if not isinstance(tombstone, dict):
             fail("ISR007", "Delete requires tombstone evidence")
         tombstone_path = text(tombstone, "path", "ISR007")
@@ -315,6 +338,23 @@ def validate_receipt(path: Path, repo: Path) -> dict:
         full_tombstone = repository_file(repo / tombstone_path, repo, "ISR007")
         if not full_tombstone.is_file() or digest(full_tombstone) != tombstone_hash:
             fail("ISR007", "tombstone missing or hash drift")
+        tombstone_data = load_json(full_tombstone)
+        try:
+            deleted_at = datetime.fromisoformat(text(tombstone_data, "deletedAt", "ISR007").replace("Z", "+00:00"))
+        except ValueError:
+            fail("ISR007", "tombstone deletedAt must be an ISO-8601 time")
+        if (tombstone_data.get("schemaVersion") != "1.0"
+                or tombstone_data.get("documentType") != "IntakeSeriesTombstone"
+                or tombstone_data.get("seriesId") != series_id
+                or tombstone_data.get("archiveManifestPath") != supersedes["manifestArchivePath"]
+                or tombstone_data.get("archiveManifestSha256") != supersedes["manifestArchiveSha256"]
+                or tombstone_data.get("intakeDocumentsDeleted") is not False
+                or deleted_at.tzinfo is None or deleted_at.utcoffset() != timezone.utc.utcoffset(deleted_at)
+                or not isinstance(tombstone_data.get("authorityEvidence"), str)
+                or not tombstone_data["authorityEvidence"].strip()
+                or not isinstance(tombstone_data.get("reason"), str)
+                or not tombstone_data["reason"].strip()):
+            fail("ISR007", "tombstone is not bound to this deleted series and archive")
     return {"receiptId": receipt_id, **summary}
 
 

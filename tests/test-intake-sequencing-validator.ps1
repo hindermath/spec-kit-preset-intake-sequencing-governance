@@ -97,6 +97,37 @@ function Reset-Fixture {
     Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
 }
 
+function Initialize-DeleteFixture {
+    Reset-Fixture
+    Copy-Item (Join-Path $TempRoot 'manifest.json') (Join-Path $TempRoot 'prior-manifest.json') -Force
+    Copy-Item (Join-Path $TempRoot 'receipt.json') (Join-Path $TempRoot 'prior-receipt.json') -Force
+    $script:Manifest.status = 'Deleted'
+    Save-Json $script:Manifest (Join-Path $TempRoot 'manifest.json')
+    $script:Receipt.receiptId = '44444444-4444-4444-8444-444444444444'
+    $script:Receipt.operation.type = 'Delete'
+    $script:Receipt.status = 'Deleted'
+    $script:Receipt.manifest.normalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'manifest.json')
+    $script:Receipt.supersedes.receiptPath = 'prior-receipt.json'
+    $script:Receipt.supersedes.receiptNormalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'prior-receipt.json')
+    $script:Receipt.supersedes.manifestArchivePath = 'prior-manifest.json'
+    $script:Receipt.supersedes.manifestArchiveSha256 = Get-NormalizedHash (Join-Path $TempRoot 'prior-manifest.json')
+    $script:Tombstone = [ordered]@{
+        schemaVersion = '1.0'
+        documentType = 'IntakeSeriesTombstone'
+        seriesId = $script:Manifest.seriesId
+        deletedAt = '2026-07-25T00:00:00Z'
+        authorityEvidence = 'Explicit fixture delete authority'
+        reason = 'Fixture deletion'
+        archiveManifestPath = $script:Receipt.supersedes.manifestArchivePath
+        archiveManifestSha256 = $script:Receipt.supersedes.manifestArchiveSha256
+        intakeDocumentsDeleted = $false
+    }
+    Save-Json $script:Tombstone (Join-Path $TempRoot 'tombstone.json')
+    $script:Receipt.tombstone.path = 'tombstone.json'
+    $script:Receipt.tombstone.normalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'tombstone.json')
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+}
+
 function Invoke-NegativeCase([scriptblock]$Mutation, [string]$ExpectedClass) {
     Reset-Fixture
     & $Mutation $script:Manifest
@@ -225,14 +256,21 @@ try {
     }
 
     Reset-Fixture
-    $script:Receipt.operation.type = 'Delete'
-    $script:Receipt.status = 'Deleted'
-    [IO.File]::WriteAllText((Join-Path $TempRoot 'prior-receipt.json'), "{}`n", [Text.UTF8Encoding]::new($false))
-    [IO.File]::WriteAllText((Join-Path $TempRoot 'prior-manifest.json'), "{}`n", [Text.UTF8Encoding]::new($false))
+    Copy-Item (Join-Path $TempRoot 'manifest.json') (Join-Path $TempRoot 'prior-manifest.json') -Force
+    Copy-Item (Join-Path $TempRoot 'receipt.json') (Join-Path $TempRoot 'prior-receipt.json') -Force
+    $script:Receipt.receiptId = '44444444-4444-4444-8444-444444444444'
+    $script:Receipt.operation.type = 'Update'
     $script:Receipt.supersedes.receiptPath = 'prior-receipt.json'
     $script:Receipt.supersedes.receiptNormalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'prior-receipt.json')
     $script:Receipt.supersedes.manifestArchivePath = 'prior-manifest.json'
     $script:Receipt.supersedes.manifestArchiveSha256 = Get-NormalizedHash (Join-Path $TempRoot 'prior-manifest.json')
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 0 }
+
+    Initialize-DeleteFixture
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 0 }
+    $script:Receipt.tombstone.path = 'N/A'
+    $script:Receipt.tombstone.normalizedSha256 = 'N/A'
     Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
     foreach ($Shell in @('Bash', 'PowerShell')) {
         Invoke-Validator $Shell receipt 2 'ISR007'
@@ -246,10 +284,35 @@ try {
     Remove-Item (Join-Path $TempRoot 'prior-receipt.json') -Force
     Copy-Item $outsidePrior (Join-Path $TempRoot 'prior-receipt.json')
 
+    Initialize-DeleteFixture
+    $script:Tombstone.seriesId = '55555555-5555-4555-8555-555555555555'
+    Save-Json $script:Tombstone (Join-Path $TempRoot 'tombstone.json')
+    $script:Receipt.tombstone.normalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'tombstone.json')
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR007' }
+
+    Initialize-DeleteFixture
+    $script:Tombstone.archiveManifestPath = 'unrelated-manifest.json'
+    Save-Json $script:Tombstone (Join-Path $TempRoot 'tombstone.json')
+    $script:Receipt.tombstone.normalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'tombstone.json')
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR007' }
+
+    Initialize-DeleteFixture
+    $priorReceipt = Get-Content (Join-Path $TempRoot 'prior-receipt.json') -Raw | ConvertFrom-Json -AsHashtable
+    $priorReceipt.seriesId = '55555555-5555-4555-8555-555555555555'
+    Save-Json $priorReceipt (Join-Path $TempRoot 'prior-receipt.json')
+    $script:Receipt.supersedes.receiptNormalizedSha256 = Get-NormalizedHash (Join-Path $TempRoot 'prior-receipt.json')
+    Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
+    foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR006' }
+
+    Initialize-DeleteFixture
+
     $outsideTombstone = Join-Path $OutsideRoot 'tombstone.json'
-    [IO.File]::WriteAllText($outsideTombstone, "{}`n", [Text.UTF8Encoding]::new($false))
+    Copy-Item (Join-Path $TempRoot 'tombstone.json') $outsideTombstone
     $script:Receipt.tombstone.path = 'tombstone.json'
     $script:Receipt.tombstone.normalizedSha256 = Get-NormalizedHash $outsideTombstone
+    Remove-Item (Join-Path $TempRoot 'tombstone.json') -Force
     New-Item -ItemType SymbolicLink -Path (Join-Path $TempRoot 'tombstone.json') -Target $outsideTombstone | Out-Null
     Save-Json $script:Receipt (Join-Path $TempRoot 'receipt.json')
     foreach ($Shell in @('Bash', 'PowerShell')) { Invoke-Validator $Shell receipt 2 'ISR007' }
